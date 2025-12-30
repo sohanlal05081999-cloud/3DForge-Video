@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3DForge - AI-Powered 3D Video Generation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.12/typed.min.js"></script>
+    <script src="https://unpkg.com/splitting@1.0.6/dist/splitting.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/splitting@1.0.6/dist/splitting.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-space-blue: #0A1628;
+            --electric-cyan: #00D4FF;
+            --quantum-purple: #6366F1;
+            --metallic-silver: #8B9DC3;
+            --neon-green: #10B981;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--deep-space-blue) 0%, #1a1a2e 50%, var(--quantum-purple) 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .hero-bg {
+            background: url('resources/hero-3d-lab.png') center/cover no-repeat;
+            position: relative;
+        }
+        
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(10, 22, 40, 0.8) 0%, rgba(26, 26, 46, 0.7) 50%, rgba(99, 102, 241, 0.6) 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--electric-cyan) 0%, var(--neon-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+        }
+        
+        .processing-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .particle-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .content-layer {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .style-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .style-card:hover {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+            border-color: var(--electric-cyan);
+        }
+        
+        .style-card.active {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, rgba(16, 185, 129, 0.2) 100%);
+            border-color: var(--electric-cyan);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--electric-cyan) 0%, var(--neon-green) 100%);
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        #three-container {
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .floating-element {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--electric-cyan);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .auth-form {
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .user-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px;
+            min-width: 200px;
+        }
+        
+        .user-menu.active {
+            display: block;
+        }
+        
+        .credits-badge {
+            background: linear-gradient(135deg, var(--electric-cyan) 0%, var(--neon-green) 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">3D</span>
+                    </div>
+                    <span class="text-white font-bold text-xl">3DForge</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#" class="nav-link text-white hover:text-cyan-400">Generate</a>
+                    <a href="gallery.html" class="nav-link text-white hover:text-cyan-400">Gallery</a>
+                    <a href="pricing.html" class="nav-link text-white hover:text-cyan-400">Pricing</a>
+                    <div id="user-section" class="flex items-center space-x-4">
+                        <button id="login-btn" class="text-white hover:text-cyan-400 transition-colors">Login</button>
+                        <button id="signup-btn" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all duration-300">
+                            Sign Up
+                        </button>
+                    </div>
+                </div>
+                <button class="md:hidden text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-bg min-h-screen flex items-center justify-center relative">
+        <div class="particle-bg" id="particles"></div>
+        <div class="content-layer max-w-7xl mx-auto px-6 py-20">
+            <div class="text-center mb-16">
+                <h1 class="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+                    <span class="gradient-text" id="typed-text"></span>
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
+                    Transform your ideas into stunning 3D videos with AI-powered generation. 
+                    Create professional animations from simple text prompts in seconds.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button id="start-creating" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:shadow-xl transition-all duration-300 hover-lift">
+                        Start Creating Now
+                    </button>
+                    <button class="border border-cyan-400 text-cyan-400 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-cyan-400 hover:text-white transition-all duration-300">
+                        Watch Demo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3D Generation Interface -->
+    <section class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                    Create <span class="gradient-text">3D Videos</span> Instantly
+                </h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Our advanced AI understands your vision and generates professional 3D videos 
+                    with realistic animations, lighting, and camera movements.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-8">
+                <!-- Prompt Input Panel -->
+                <div class="lg:col-span-4">
+                    <div class="glass-effect rounded-2xl p-6 hover-lift">
+                        <h3 class="text-xl font-semibold text-white mb-4">Describe Your Vision</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Text Prompt</label>
+                                <textarea 
+                                    id="prompt-input"
+                                    class="w-full h-32 bg-gray-800 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-400 focus:border-cyan-400 focus:outline-none resize-none"
+                                    placeholder="Describe your 3D video scene..."
+                                ></textarea>
+                                <div class="flex justify-between mt-2">
+                                    <span class="text-xs text-gray-400">Be as detailed as possible</span>
+                                    <span id="char-count" class="text-xs text-gray-400">0/500</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Upload Reference Image</label>
+                                <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-cyan-400 transition-colors cursor-pointer" id="image-upload">
+                                    <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    <p class="text-gray-400">Drag & drop or click to upload</p>
+                                    <p class="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
+                                </div>
+                            </div>
+
+                            <button id="generate-btn" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300">
+                                Generate 3D Video
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Preview Window -->
+                <div class="lg:col-span-5">
+                    <div class="glass-effect rounded-2xl p-6 hover-lift">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold text-white">3D Preview</h3>
+                            <div class="flex space-x-2">
+                                <button class="p-2 text-gray-400 hover:text-white transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                                    </svg>
+                                </button>
+                                <button class="p-2 text-gray-400 hover:text-white transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="three-container" class="h-80 bg-gray-900 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                <p class="text-gray-400">3D preview will appear here</p>
+                                <p class="text-sm text-gray-500 mt-2">Click generate to start</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="mt-4" id="progress-container" style="display: none;">
+                            <div class="flex justify-between text-sm text-gray-400 mb-2">
+                                <span>Generating...</span>
+                                <span id="progress-text">0%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="progress-bar h-2 rounded-full" id="progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Style Settings Panel -->
+                <div class="lg:col-span-3">
+                    <div class="glass-effect rounded-2xl p-6 hover-lift">
+                        <h3 class="text-xl font-semibold text-white mb-4">Style & Settings</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Video Duration</label>
+                                <select id="duration-select" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-white focus:border-cyan-400 focus:outline-none">
+                                    <option value="5">5 seconds</option>
+                                    <option value="10" selected>10 seconds</option>
+                                    <option value="15">15 seconds</option>
+                                    <option value="30">30 seconds</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Resolution</label>
+                                <select id="resolution-select" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-2 text-white focus:border-cyan-400 focus:outline-none">
+                                    <option value="720">720p (HD)</option>
+                                    <option value="1080" selected>1080p (Full HD)</option>
+                                    <option value="1440">1440p (2K)</option>
+                                    <option value="2160">4K Ultra HD</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Style Intensity</label>
+                                <input type="range" min="1" max="10" value="7" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider" id="style-intensity">
+                                <div class="flex justify-between text-xs text-gray-400 mt-1">
+                                    <span>Subtle</span>
+                                    <span>Intense</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-3">Style Presets</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="style-card rounded-lg p-3 text-center cursor-pointer active" data-style="realistic">
+                                        <div class="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded mx-auto mb-2"></div>
+                                        <span class="text-xs text-white">Realistic</span>
+                                    </div>
+                                    <div class="style-card rounded-lg p-3 text-center cursor-pointer" data-style="cartoon">
+                                        <div class="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded mx-auto mb-2"></div>
+                                        <span class="text-xs text-white">Cartoon</span>
+                                    </div>
+                                    <div class="style-card rounded-lg p-3 text-center cursor-pointer" data-style="cyberpunk">
+                                        <div class="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded mx-auto mb-2"></div>
+                                        <span class="text-xs text-white">Cyberpunk</span>
+                                    </div>
+                                    <div class="style-card rounded-lg p-3 text-center cursor-pointer" data-style="steampunk">
+                                        <div class="w-8 h-8 bg-gradient-to-r from-amber-600 to-orange-700 rounded mx-auto mb-2"></div>
+                                        <span class="text-xs text-white">Steampunk</span>
+                                    </div>
+                                    <div class="style-card rounded-lg p-3 text-center cursor-pointer" data-style="fantasy">
+                                        <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded mx-auto mb-2"></div>
+                                        <span class="text-xs text-white">Fantasy</span>
+                                    </div>
+                                    <div class="style-card rounded-lg p-3 text-center cursor-pointer" data-style="abstract">
+                                        <div class="w-8 h-8 bg-gradient-to-r from-red-400 to-pink-500 rounded mx-auto mb-2"></div>
+                                        <span class="text-xs text-white">Abstract</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                    Why Choose <span class="gradient-text">3DForge</span>
+                </h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Experience the future of 3D content creation with our cutting-edge AI technology
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass-effect rounded-2xl p-8 text-center hover-lift floating-element">
+                    <div class="w-16 h-16 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-4">Lightning Fast</h3>
+                    <p class="text-gray-300">
+                        Generate professional 3D videos in seconds, not hours. Our optimized AI models deliver stunning results instantly.
+                    </p>
+                </div>
+
+                <div class="glass-effect rounded-2xl p-8 text-center hover-lift floating-element" style="animation-delay: 0.2s;">
+                    <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-4">No Experience Needed</h3>
+                    <p class="text-gray-300">
+                        Create stunning 3D content without any technical skills. Just describe your vision and let AI handle the rest.
+                    </p>
+                </div>
+
+                <div class="glass-effect rounded-2xl p-8 text-center hover-lift floating-element" style="animation-delay: 0.4s;">
+                    <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-4">Fully Customizable</h3>
+                    <p class="text-gray-300">
+                        Fine-tune every aspect of your 3D videos with advanced controls for style, duration, and quality settings.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Section -->
+    <section class="py-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                        Powered by <span class="gradient-text">Advanced AI</span>
+                    </h2>
+                    <p class="text-xl text-gray-300 mb-8">
+                        Our platform leverages cutting-edge neural networks, including NeRF and 3D Gaussian Splatting, 
+                        to deliver photorealistic 3D content that pushes the boundaries of what's possible.
+                    </p>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-3 h-3 bg-cyan-400 rounded-full"></div>
+                            <span class="text-gray-300">Neural Radiance Fields for realistic lighting</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                            <span class="text-gray-300">3D Gaussian Splatting for fast rendering</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-3 h-3 bg-purple-400 rounded-full"></div>
+                            <span class="text-gray-300">Latent Diffusion Models for creativity</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <img src="resources/interface-preview.png" alt="3D Generation Interface" class="rounded-2xl shadow-2xl">
+                    <div class="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-purple-500/20 rounded-2xl"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <div class="glass-effect rounded-3xl p-12">
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                    Ready to Create <span class="gradient-text">Amazing</span> 3D Videos?
+                </h2>
+                <p class="text-xl text-gray-300 mb-8">
+                    Join thousands of creators, developers, and businesses who are already using 3DForge 
+                    to bring their ideas to life.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button id="cta-signup" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:shadow-xl transition-all duration-300 hover-lift">
+                        Start Free Trial
+                    </button>
+                    <button class="border border-cyan-400 text-cyan-400 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-cyan-400 hover:text-white transition-all duration-300">
+                        View Gallery
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-2 mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">3D</span>
+                    </div>
+                    <span class="text-white font-bold text-xl">3DForge</span>
+                </div>
+                <p class="text-gray-400">
+                    © 2024 3DForge. All rights reserved. Revolutionizing 3D content creation with AI.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Authentication Modal -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-form">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="auth-title" class="text-2xl font-bold text-white">Sign Up</h2>
+                <button id="close-auth-modal" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="auth-form">
+                <div id="name-field" class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Name</label>
+                    <input type="text" id="auth-name" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:border-cyan-400 focus:outline-none" required>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                    <input type="email" id="auth-email" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:border-cyan-400 focus:outline-none" required>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                    <input type="password" id="auth-password" class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:border-cyan-400 focus:outline-none" required>
+                </div>
+                
+                <button type="submit" id="auth-submit" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300">
+                    Sign Up
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-gray-400 text-sm">
+                    <span id="auth-switch-text">Already have an account?</span>
+                    <button id="auth-switch" class="text-cyan-400 hover:text-cyan-300 ml-1">Login</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

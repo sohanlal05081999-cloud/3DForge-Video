@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - 3DForge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-space-blue: #0A1628;
+            --electric-cyan: #00D4FF;
+            --quantum-purple: #6366F1;
+            --metallic-silver: #8B9DC3;
+            --neon-green: #10B981;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--deep-space-blue) 0%, #1a1a2e 50%, var(--quantum-purple) 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--electric-cyan) 0%, var(--neon-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--electric-cyan);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .nav-link.active {
+            color: var(--electric-cyan);
+        }
+        
+        .nav-link.active::after {
+            width: 100%;
+        }
+        
+        .credits-badge {
+            background: linear-gradient(135deg, var(--electric-cyan) 0%, var(--neon-green) 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .video-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+            border-color: var(--electric-cyan);
+        }
+        
+        .status-pending { color: #f59e0b; }
+        .status-processing { color: #3b82f6; }
+        .status-completed { color: #10b981; }
+        .status-failed { color: #ef4444; }
+        
+        .usage-meter {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .usage-fill {
+            background: linear-gradient(90deg, var(--electric-cyan) 0%, var(--neon-green) 100%);
+            height: 8px;
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">3D</span>
+                    </div>
+                    <span class="text-white font-bold text-xl">3DForge</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="nav-link text-white hover:text-cyan-400">Generate</a>
+                    <a href="#" class="nav-link text-white hover:text-cyan-400 active">Dashboard</a>
+                    <a href="my-videos.html" class="nav-link text-white hover:text-cyan-400">My Videos</a>
+                    <a href="pricing.html" class="nav-link text-white hover:text-cyan-400">Pricing</a>
+                    <div id="user-section" class="flex items-center space-x-4">
+                        <div class="credits-badge" id="credits-badge">
+                            0 Credits
+                        </div>
+                        <div class="relative">
+                            <button id="user-menu-btn" class="flex items-center space-x-2 text-white hover:text-cyan-400 transition-colors">
+                                <span id="user-name">User</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div id="user-menu" class="user-menu">
+                                <a href="dashboard.html" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded">Dashboard</a>
+                                <a href="my-videos.html" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded">My Videos</a>
+                                <a href="billing.html" class="block px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded">Billing</a>
+                                <button id="logout-btn" class="block w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded">Logout</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <!-- Welcome Section -->
+            <div class="mb-12">
+                <h1 class="text-4xl font-bold text-white mb-4">
+                    Welcome back, <span id="welcome-name">User</span>
+                </h1>
+                <p class="text-xl text-gray-300">
+                    Manage your 3D videos, track usage, and explore new creative possibilities.
+                </p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid md:grid-cols-4 gap-6 mb-12">
+                <div class="glass-effect rounded-2xl p-6 text-center hover-lift">
+                    <div class="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2" id="total-videos">0</h3>
+                    <p class="text-gray-300">Total Videos</p>
+                </div>
+
+                <div class="glass-effect rounded-2xl p-6 text-center hover-lift">
+                    <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2" id="credits-remaining">0</h3>
+                    <p class="text-gray-300">Credits Remaining</p>
+                </div>
+
+                <div class="glass-effect rounded-2xl p-6 text-center hover-lift">
+                    <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2" id="processing-videos">0</h3>
+                    <p class="text-gray-300">Processing</p>
+                </div>
+
+                <div class="glass-effect rounded-2xl p-6 text-center hover-lift">
+                    <div class="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2" id="subscription-type">Free</h3>
+                    <p class="text-gray-300">Plan</p>
+                </div>
+            </div>
+
+            <!-- Usage Analytics -->
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <div class="glass-effect rounded-2xl p-8">
+                    <h2 class="text-2xl font-bold text-white mb-6">Usage Analytics</h2>
+                    <div id="usage-chart" style="height: 300px;"></div>
+                </div>
+
+                <div class="glass-effect rounded-2xl p-8">
+                    <h2 class="text-2xl font-bold text-white mb-6">Credit Usage</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-300">Videos Generated This Month</span>
+                                <span class="text-white font-semibold" id="monthly-videos">0</span>
+                            </div>
+                            <div class="usage-meter">
+                                <div class="usage-fill" id="monthly-videos-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-300">Credits Used</span>
+                                <span class="text-white font-semibold"><span id="credits-used">0</span> / <span id="credits-total">20</span></span>
+                            </div>
+                            <div class="usage-meter">
+                                <div class="usage-fill" id="credits-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-300">Storage Used</span>
+                                <span class="text-white font-semibold"><span id="storage-used">0</span> MB</span>
+                            </div>
+                            <div class="usage-meter">
+                                <div class="usage-fill" id="storage-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <button onclick="window.location.href='pricing.html'" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300">
+                            Upgrade Plan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Videos -->
+            <div class="glass-effect rounded-2xl p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-white">Recent Videos</h2>
+                    <a href="my-videos.html" class="text-cyan-400 hover:text-cyan-300">View All</a>
+                </div>
+
+                <div id="recent-videos" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Videos will be loaded here -->
+                </div>
+
+                <div id="no-videos" class="text-center py-12 hidden">
+                    <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"></path>
+                    </svg>
+                    <h3 class="text-xl font-semibold text-white mb-2">No videos yet</h3>
+                    <p class="text-gray-400 mb-6">Start creating amazing 3D videos with our AI-powered platform.</p>
+                    <a href="index.html" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300">
+                        Create Your First Video
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-2 mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">3D</span>
+                    </div>
+                    <span class="text-white font-bold text-xl">3DForge</span>
+                </div>
+                <p class="text-gray-400">
+                    © 2024 3DForge. All rights reserved. Revolutionizing 3D content creation with AI.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Dashboard specific functionality
+        class DashboardApp {
+            constructor() {
+                this.apiUrl = 'http://localhost:5000/api';
+                this.token = localStorage.getItem('token');
+                this.user = null;
+                this.init();
+            }
+
+            async init() {
+                if (!this.token) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                await this.fetchUserProfile();
+                this.initEventListeners();
+                this.loadDashboardData();
+                this.initUsageChart();
+            }
+
+            async fetchUserProfile() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/auth/me`, {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.user = data.user;
+                        this.updateUI();
+                    } else {
+                        this.logout();
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch user profile:', error);
+                    this.logout();
+                }
+            }
+
+            updateUI() {
+                if (this.user) {
+                    document.getElementById('welcome-name').textContent = this.user.name;
+                    document.getElementById('user-name').textContent = this.user.name;
+                    document.getElementById('credits-badge').textContent = `${this.user.credits} Credits`;
+                    document.getElementById('credits-remaining').textContent = this.user.credits;
+                    document.getElementById('credits-total').textContent = this.getTotalCreditsForPlan(this.user.subscriptionType);
+                    document.getElementById('subscription-type').textContent = this.capitalizeFirst(this.user.subscriptionType);
+                    document.getElementById('storage-used').textContent = this.user.storageUsed || 0;
+                }
+            }
+
+            async loadDashboardData() {
+                try {
+                    // Load user videos
+                    const response = await fetch(`${this.apiUrl}/videos?limit=6`, {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.updateDashboardStats(data.videos);
+                        this.renderRecentVideos(data.videos);
+                        this.updateUsageStats(data.videos);
+                    }
+                } catch (error) {
+                    console.error('Failed to load dashboard data:', error);
+                }
+            }
+
+            updateDashboardStats(videos) {
+                const totalVideos = videos.length;
+                const processingVideos = videos.filter(v => v.status === 'processing').length;
+
+                document.getElementById('total-videos').textContent = totalVideos;
+                document.getElementById('processing-videos').textContent = processingVideos;
+
+                // Update credits used
+                const creditsUsed = videos.reduce((sum, video) => sum + (video.creditsUsed || 0), 0);
+                document.getElementById('credits-used').textContent = creditsUsed;
+
+                // Update progress bars
+                const monthlyQuota = this.getMonthlyQuota(this.user.subscriptionType);
+                const videosProgress = Math.min((totalVideos / monthlyQuota) * 100, 100);
+                const creditsProgress = Math.min((creditsUsed / this.user.credits) * 100, 100);
+                const storageProgress = Math.min((this.user.storageUsed / 1024) * 100, 100); // 1GB limit
+
+                document.getElementById('monthly-videos').textContent = totalVideos;
+                document.getElementById('monthly-videos-bar').style.width = `${videosProgress}%`;
+                document.getElementById('credits-bar').style.width = `${creditsProgress}%`;
+                document.getElementById('storage-bar').style.width = `${storageProgress}%`;
+            }
+
+            renderRecentVideos(videos) {
+                const container = document.getElementById('recent-videos');
+                const noVideos = document.getElementById('no-videos');
+
+                if (videos.length === 0) {
+                    container.classList.add('hidden');
+                    noVideos.classList.remove('hidden');
+                    return;
+                }
+
+                container.classList.remove('hidden');
+                noVideos.classList.add('hidden');
+
+                container.innerHTML = videos.slice(0, 3).map(video => `
+                    <div class="video-card rounded-2xl overflow-hidden cursor-pointer" onclick="window.location.href='video.html?id=${video._id}'">
+                        <div class="relative">
+                            <img src="${video.thumbnailUrl || 'resources/3d-video-thumbnails.png'}" alt="${video.title}" class="w-full h-48 object-cover">
+                            <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                                ${video.duration}s
+                            </div>
+                            <div class="absolute bottom-2 left-2">
+                                <span class="status-${video.status} text-xs font-medium bg-black bg-opacity-70 px-2 py-1 rounded">
+                                    ${video.status.charAt(0).toUpperCase() + video.status.slice(1)}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-white font-semibold mb-2">${video.title}</h3>
+                            <p class="text-gray-400 text-sm mb-3 line-clamp-2">${video.description}</p>
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span>${video.resolution}</span>
+                                <span>${video.creditsUsed} credits</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateUsageStats(videos) {
+                // This would typically come from backend analytics
+                // For now, we'll generate mock data
+                const last7Days = Array.from({length: 7}, (_, i) => {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                }).reverse();
+
+                const videoCounts = last7Days.map(() => Math.floor(Math.random() * 5));
+
+                this.renderUsageChart(last7Days, videoCounts);
+            }
+
+            renderUsageChart(labels, data) {
+                const chartContainer = document.getElementById('usage-chart');
+                const chart = echarts.init(chartContainer);
+                
+                const option = {
+                    backgroundColor: 'transparent',
+                    textStyle: { color: '#ffffff' },
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(26, 26, 46, 0.9)',
+                        borderColor: '#00d4ff',
+                        textStyle: { color: '#ffffff' }
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: labels,
+                        axisLine: { lineStyle: { color: '#374151' } },
+                        axisLabel: { color: '#9ca3af' }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: { lineStyle: { color: '#374151' } },
+                        axisLabel: { color: '#9ca3af' },
+                        splitLine: { lineStyle: { color: '#374151' } }
+                    },
+                    series: [{
+                        name: 'Videos Generated',
+                        type: 'line',
+                        data: data,
+                        smooth: true,
+                        lineStyle: { color: '#00d4ff', width: 3 },
+                        itemStyle: { color: '#00d4ff' },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(0, 212, 255, 0.3)' },
+                                    { offset: 1, color: 'rgba(0, 212, 255, 0.05)' }
+                                ]
+                            }
+                        }
+                    }]
+                };
+                
+                chart.setOption(option);
+                window.addEventListener('resize', () => chart.resize());
+            }
+
+            initUsageChart() {
+                // Chart is initialized in updateUsageStats
+            }
+
+            initEventListeners() {
+                document.getElementById('logout-btn')?.addEventListener('click', () => this.logout());
+                document.getElementById('user-menu-btn')?.addEventListener('click', () => {
+                    document.getElementById('user-menu').classList.toggle('active');
+                });
+
+                // Close user menu on outside click
+                document.addEventListener('click', (e) => {
+                    const userMenu = document.getElementById('user-menu');
+                    const userMenuBtn = document.getElementById('user-menu-btn');
+                    if (userMenu && !userMenu.contains(e.target) && !userMenuBtn?.contains(e.target)) {
+                        userMenu.classList.remove('active');
+                    }
+                });
+            }
+
+            getTotalCreditsForPlan(subscriptionType) {
+                const planCredits = {
+                    free: 20,
+                    starter: 100,
+                    pro: 500,
+                    enterprise: 9999
+                };
+                return planCredits[subscriptionType] || 20;
+            }
+
+            getMonthlyQuota(subscriptionType) {
+                const quotas = {
+                    free: 5,
+                    starter: 20,
+                    pro: 100,
+                    enterprise: 9999
+                };
+                return quotas[subscriptionType] || 5;
+            }
+
+            capitalizeFirst(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            logout() {
+                localStorage.removeItem('token');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            new DashboardApp();
+        });
+    </script>
+</body>
+</html>

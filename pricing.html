@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - 3DForge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-space-blue: #0A1628;
+            --electric-cyan: #00D4FF;
+            --quantum-purple: #6366F1;
+            --metallic-silver: #8B9DC3;
+            --neon-green: #10B981;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--deep-space-blue) 0%, #1a1a2e 50%, var(--quantum-purple) 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--electric-cyan) 0%, var(--neon-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+        }
+        
+        .pricing-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+            border-color: var(--electric-cyan);
+        }
+        
+        .pricing-card.featured {
+            border-color: var(--electric-cyan);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+        
+        .pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: 20px;
+            right: -30px;
+            background: linear-gradient(135deg, var(--electric-cyan) 0%, var(--neon-green) 100%);
+            color: white;
+            padding: 4px 40px;
+            transform: rotate(45deg);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--electric-cyan);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .toggle-switch.active {
+            background: var(--electric-cyan);
+        }
+        
+        .toggle-knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+        
+        .toggle-switch.active .toggle-knob {
+            transform: translateX(30px);
+        }
+        
+        .calculator-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+        }
+        
+        .calculator-input:focus {
+            border-color: var(--electric-cyan);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+        
+        .feature-check {
+            color: var(--neon-green);
+        }
+        
+        .feature-cross {
+            color: #ef4444;
+        }
+        
+        .usage-meter {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .usage-fill {
+            background: linear-gradient(90deg, var(--electric-cyan) 0%, var(--neon-green) 100%);
+            height: 8px;
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">3D</span>
+                    </div>
+                    <span class="text-white font-bold text-xl">3DForge</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="nav-link text-white hover:text-cyan-400">Generate</a>
+                    <a href="gallery.html" class="nav-link text-white hover:text-cyan-400">Gallery</a>
+                    <a href="#" class="nav-link text-white hover:text-cyan-400">Pricing</a>
+                    <button class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all duration-300">
+                        Get Started
+                    </button>
+                </div>
+                <button class="md:hidden text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h1 class="text-5xl md:text-6xl font-bold text-white mb-6">
+                    Simple <span class="gradient-text">Pricing</span> for Everyone
+                </h1>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+                    Choose the perfect plan for your 3D video creation needs. From individual creators to enterprise teams.
+                </p>
+                
+                <!-- Billing Toggle -->
+                <div class="flex items-center justify-center space-x-4">
+                    <span class="text-gray-300">Monthly</span>
+                    <div class="toggle-switch" id="billing-toggle">
+                        <div class="toggle-knob"></div>
+                    </div>
+                    <span class="text-gray-300">Yearly</span>
+                    <span class="bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">Save 20%</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Calculator -->
+    <section class="pb-16">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="glass-effect rounded-2xl p-8 mb-12">
+                <h2 class="text-2xl font-bold text-white mb-6 text-center">Calculate Your Usage</h2>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Videos per month</label>
+                        <input 
+                            type="number" 
+                            id="video-count"
+                            class="calculator-input w-full px-4 py-3 rounded-lg"
+                            value="10"
+                            min="1"
+                            max="1000"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Resolution</label>
+                        <select id="resolution-select" class="calculator-input w-full px-4 py-3 rounded-lg">
+                            <option value="720">720p HD</option>
+                            <option value="1080" selected>1080p Full HD</option>
+                            <option value="1440">1440p 2K</option>
+                            <option value="2160">4K Ultra HD</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Average duration</label>
+                        <select id="duration-select" class="calculator-input w-full px-4 py-3 rounded-lg">
+                            <option value="5">5 seconds</option>
+                            <option value="10" selected>10 seconds</option>
+                            <option value="15">15 seconds</option>
+                            <option value="30">30 seconds</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <div class="glass-effect rounded-lg p-6 inline-block">
+                        <div class="text-sm text-gray-300 mb-2">Estimated monthly cost</div>
+                        <div class="text-3xl font-bold text-white">
+                            $<span id="calculated-price">29</span>
+                            <span class="text-lg text-gray-400">/month</span>
+                        </div>
+                        <div class="text-sm text-gray-400 mt-2">
+                            <span id="calculated-videos">10</span> videos • 
+                            <span id="calculated-storage">2.5</span> GB storage
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Plans -->
+    <section class="pb-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Starter Plan -->
+                <div class="pricing-card rounded-2xl p-8 hover-lift">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-white mb-2">Starter</h3>
+                        <p class="text-gray-300 mb-4">Perfect for beginners</p>
+                        <div class="text-4xl font-bold text-white mb-2">
+                            $<span class="monthly-price">19</span>
+                            <span class="text-lg text-gray-400">/month</span>
+                        </div>
+                        <div class="text-sm text-gray-400">
+                            $<span class="yearly-price" style="display: none;">15</span>
+                            <span class="yearly-price" style="display: none;">/month billed yearly</span>
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">20 videos per month</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">1080p Full HD resolution</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">Basic style presets</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">Email support</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-cross" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <span class="text-gray-500">No API access</span>
+                        </li>
+                    </ul>
+                    
+                    <button class="w-full border border-cyan-400 text-cyan-400 py-3 rounded-lg font-semibold hover:bg-cyan-400 hover:text-white transition-all duration-300">
+                        Start Free Trial
+                    </button>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="pricing-card featured rounded-2xl p-8 hover-lift">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-white mb-2">Professional</h3>
+                        <p class="text-gray-300 mb-4">For serious creators</p>
+                        <div class="text-4xl font-bold text-white mb-2">
+                            $<span class="monthly-price">49</span>
+                            <span class="text-lg text-gray-400">/month</span>
+                        </div>
+                        <div class="text-sm text-gray-400">
+                            $<span class="yearly-price" style="display: none;">39</span>
+                            <span class="yearly-price" style="display: none;">/month billed yearly</span>
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">100 videos per month</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">4K Ultra HD resolution</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">All style presets + custom</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">Priority support</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">API access</span>
+                        </li>
+                    </ul>
+                    
+                    <button class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300">
+                        Start Free Trial
+                    </button>
+                </div>
+
+                <!-- Enterprise Plan -->
+                <div class="pricing-card rounded-2xl p-8 hover-lift">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold text-white mb-2">Enterprise</h3>
+                        <p class="text-gray-300 mb-4">For teams and businesses</p>
+                        <div class="text-4xl font-bold text-white mb-2">
+                            <span class="text-2xl">Custom</span>
+                        </div>
+                        <div class="text-sm text-gray-400">
+                            Contact sales for pricing
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">Unlimited videos</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">8K resolution support</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">Custom AI models</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">24/7 dedicated support</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span class="text-gray-300">SLA guarantee</span>
+                        </li>
+                    </ul>
+                    
+                    <button class="w-full border border-cyan-400 text-cyan-400 py-3 rounded-lg font-semibold hover:bg-cyan-400 hover:text-white transition-all duration-300">
+                        Contact Sales
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Usage Visualization -->
+    <section class="py-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-white mb-6">
+                    Track Your <span class="gradient-text">Usage</span>
+                </h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Monitor your 3D video generation activity and optimize your workflow with detailed analytics.
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="space-y-6">
+                        <div class="glass-effect rounded-lg p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-white font-medium">Videos Generated</span>
+                                <span class="text-cyan-400 font-semibold">73/100</span>
+                            </div>
+                            <div class="usage-meter">
+                                <div class="usage-fill" style="width: 73%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="glass-effect rounded-lg p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-white font-medium">Storage Used</span>
+                                <span class="text-green-400 font-semibold">15.2/50 GB</span>
+                            </div>
+                            <div class="usage-meter">
+                                <div class="usage-fill" style="width: 30%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="glass-effect rounded-lg p-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-white font-medium">Processing Time</span>
+                                <span class="text-purple-400 font-semibold">2.4/10 hours</span>
+                            </div>
+                            <div class="usage-meter">
+                                <div class="usage-fill" style="width: 24%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-effect rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-white mb-6">Usage Analytics</h3>
+                    <div id="usage-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-20">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-white mb-6">
+                    Frequently Asked <span class="gradient-text">Questions</span>
+                </h2>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="glass-effect rounded-lg p-6">
+                    <button class="faq-question w-full text-left flex justify-between items-center text-white font-semibold">
+                        <span>How long does it take to generate a 3D video?</span>
+                        <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer hidden mt-4 text-gray-300">
+                        Generation time varies based on video length and complexity. A typical 10-second 1080p video takes 2-4 minutes, while 4K videos may take 5-8 minutes.
+                    </div>
+                </div>
+                
+                <div class="glass-effect rounded-lg p-6">
+                    <button class="faq-question w-full text-left flex justify-between items-center text-white font-semibold">
+                        <span>What file formats are supported?</span>
+                        <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer hidden mt-4 text-gray-300">
+                        We support MP4, MOV, and WebM formats for output. Input images can be JPG, PNG, or WebP. All videos are optimized for web and mobile viewing.
+                    </div>
+                </div>
+                
+                <div class="glass-effect rounded-lg p-6">
+                    <button class="faq-question w-full text-left flex justify-between items-center text-white font-semibold">
+                        <span>Can I use the generated videos commercially?</span>
+                        <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer hidden mt-4 text-gray-300">
+                        Yes, all videos generated with paid plans include full commercial usage rights. You can use them in marketing, films, games, and other commercial projects.
+                    </div>
+                </div>
+                
+                <div class="glass-effect rounded-lg p-6">
+                    <button class="faq-question w-full text-left flex justify-between items-center text-white font-semibold">
+                        <span>What happens if I exceed my monthly limit?</span>
+                        <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="faq-answer hidden mt-4 text-gray-300">
+                        You can purchase additional credits or upgrade your plan. Unused credits roll over to the next month for annual subscribers.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-2 mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">3D</span>
+                    </div>
+                    <span class="text-white font-bold text-xl">3DForge</span>
+                </div>
+                <p class="text-gray-400">
+                    © 2024 3DForge. All rights reserved. Revolutionizing 3D content creation with AI.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>
